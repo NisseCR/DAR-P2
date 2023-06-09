@@ -10,6 +10,7 @@ import re
 
 # Setup
 nltk.download('stopwords')
+nltk.download('punkt')
 STOP_WORDS = set(stopwords.words())
 PS = PorterStemmer()
 
