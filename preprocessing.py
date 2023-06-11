@@ -11,8 +11,10 @@ import re
 
 # Setup
 nltk.download('stopwords')
-STOP_LIST = set(stopwords.words() + [*string.punctuation])
+nltk.download('punkt')
+
 PS = PorterStemmer()
+STOP_LIST = set(stopwords.words() + [*string.punctuation])
 
 
 def read_data() -> pd.DataFrame:
