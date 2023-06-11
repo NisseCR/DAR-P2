@@ -1,4 +1,5 @@
-from typing import Tuple, Any
+import string
+from typing import Tuple, Any, List
 import pandas as pd
 import nltk
 from nltk.corpus import stopwords
@@ -10,7 +11,7 @@ import re
 
 # Setup
 nltk.download('stopwords')
-STOP_WORDS = set(stopwords.words())
+STOP_LIST = set(stopwords.words() + [*string.punctuation])
 PS = PorterStemmer()
 
 
@@ -21,46 +22,30 @@ def read_data() -> pd.DataFrame:
     return df
 
 
-def remove_punctuation(sentence: str) -> str:
-    return re.sub(r'[^\w\s]', ' ', sentence)
+def npl_pipeline(sentence: str) -> list[str]:
+    return [
+        PS.stem(word.lower())
+        for word in word_tokenize(sentence)
+        if word.lower() not in STOP_LIST and not word.isdigit()
+    ]
 
 
-def remove_numbers(sentence: str) -> str:
-    return re.sub(r'[0-9]', ' ', sentence)
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    df['product_title'] = df['product_title'].apply(npl_pipeline)
+    # df['product_description'] = df['product_description'].apply(npl_pipeline)
+    return df
 
 
-def remove_stopwords(tokens: list[str]) -> list[str]:
-    return [word for word in tokens if word not in STOP_WORDS]
-
-
-def stemming(tokens: list[str]) -> list[str]:
-    return [PS.stem(word) for word in tokens]
-
-
-def sentence_pipeline(sentence: str) -> str:
-    sentence = sentence.lower()
-    sentence = remove_punctuation(sentence)
-    sentence = remove_numbers(sentence)
-    return sentence
-
-
-def tokenize_pipeline(tokens: list[str]) -> list[str]:
-    tokens = remove_stopwords(tokens)
-    tokens = stemming(tokens)
-    return tokens
-
-
-def npl_pipeline(sentence: str) -> str:
-    sentence = sentence_pipeline(sentence)
-    tokens = word_tokenize(sentence)
-    tokens = tokenize_pipeline(tokens)
-    sentence = TreebankWordDetokenizer().detokenize(tokens)
-    return sentence
+def export(df: pd.DataFrame):
+    df.to_csv('./data/data.csv')
 
 
 def preprocess():
-    # df = read_data()
+    df = read_data()
+    df = clean_data(df)
+    # export(df)
 
+    # Test
     test = "#123 The Big programmer anti-ui; stuff, packaged?!I'm doing a tested test at the moment."
 
     print(test)
