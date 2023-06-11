@@ -1,12 +1,13 @@
 import string
-from typing import Tuple, Any, List
 import pandas as pd
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from nltk.tokenize.treebank import TreebankWordDetokenizer
 from nltk.stem import PorterStemmer
-import re
+
+# Pandas settings
+pd.options.display.max_columns = 10
+pd.options.display.max_colwidth = 30
 
 
 # Setup
@@ -17,43 +18,102 @@ PS = PorterStemmer()
 STOP_LIST = set(stopwords.words() + [*string.punctuation])
 
 
+# <editor-fold desc="Import data">
 def read_data() -> pd.DataFrame:
     query_df = pd.read_csv('./data/query_product.csv', encoding='latin1')
     product_df = pd.read_csv('./data/product_descriptions.csv', encoding='latin1')
     df = pd.merge(query_df, product_df, on='product_uid', how='left')
     return df
+# </editor-fold>
 
 
+# <editor-fold desc="Text preprocessing">
 def npl_pipeline(sentence: str) -> list[str]:
+    """
+    Apply text preprocessing to the given sentence:
+    - Remove punctuation
+    - Remove stopwords
+    - Remove numbers
+    - Transform to lowercase
+    - Apply stemming
+    :param sentence: raw sentence
+    :return: tokenized sentence
+    """
     return [
-        PS.stem(word.lower())
-        for word in word_tokenize(sentence)
-        if word.lower() not in STOP_LIST and not word.isdigit()
+        PS.stem(word)
+        for word in word_tokenize(sentence.lower())
+        if word not in STOP_LIST
+        and not word.isdigit()
     ]
 
 
-def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    df['product_title'] = df['product_title'].apply(npl_pipeline)
-    # df['product_description'] = df['product_description'].apply(npl_pipeline)
+def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[col] = df[col].apply(npl_pipeline)
     return df
+# </editor-fold>
 
 
+# <editor-fold desc="Add regression features">
+def words_in_common(query: list[str], doc: list[str]) -> int:
+    return len(set(query).intersection(doc))
+
+
+def add_features(df: pd.DataFrame) -> pd.DataFrame:
+    df['len_of_query'] = df['query'].apply(len)
+    df['len_of_doc'] = df['doc'].apply(len)
+    df['words_in_common'] = df.apply(lambda r: words_in_common(r['query'], r['doc']), axis=1)
+    df['ratio_in_common'] = df['words_in_common'] / df['len_of_query']
+    df['complete_ratio'] = df['ratio_in_common'] == 1
+    return df
+# </editor-fold>
+
+
+# <editor-fold desc="Truncate data">
+def truncate_unusable_data(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.dropna(subset=['ratio_in_common'])
+    return df
+# </editor-fold>
+
+
+# <editor-fold desc="Export data">
 def export(df: pd.DataFrame):
     df.to_csv('./data/data.csv')
+# </editor-fold>
 
 
-def preprocess():
+def preprocess(doc_name: str):
+    # Read from csv
     df = read_data()
-    df = clean_data(df)
-    # export(df)
 
+    # Rename document column
+    df = df.rename(columns={doc_name: 'doc', 'search_term': 'query'})
+    df = df[['id', 'product_uid', 'query', 'doc', 'relevance']]
+
+    # NPL preprocessing pipeline
+    df = data_preprocessing(df, 'doc')
+    df = data_preprocessing(df, 'query')
+
+    # Feature extraction
+    df = add_features(df)
+
+    # Truncate data
+    df = truncate_unusable_data(df)
+
+    # Exporting
+    export(df)
+    print(df.columns)
+    print(df.head(10))
+
+
+def test():
     # Test
-    test = "#123 The Big programmer anti-ui; stuff, packaged?!I'm doing a tested test at the moment."
+    data = "#123 The Big programmer anti-ui; stuff, packaged?!I'm doing a tested test at the moment."
 
-    print(test)
-    test = npl_pipeline(test)
-    print(test)
+    print(data)
+    data = npl_pipeline(data)
+    print(data)
 
 
 if __name__ == '__main__':
-    preprocess()
+    preprocess('product_title')
+    # test()

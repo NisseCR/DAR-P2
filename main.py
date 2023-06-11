@@ -1,8 +1,10 @@
 from preprocessing import preprocess
+from modelling import model
 
 
 def main():
-    preprocess()
+    preprocess('product_title')
+    model()
 
 
 if __name__ == '__main__':
