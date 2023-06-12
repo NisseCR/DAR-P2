@@ -65,6 +65,10 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
 
 # <editor-fold desc="Add regression features">
+# possible features to add:
+# [ ] measurement shit -> 100feet is similar to 120ft
+# [ ] colour similarity (nicks idee)
+
 def words_in_common(query: list[str], doc: list[str]) -> int:
     return len(set(query).intersection(doc))
 
