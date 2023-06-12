@@ -63,12 +63,11 @@ def explore():
     query_df, product_df, clean_df = read_data()
 
     # Preprocessed data
-    feature_heatmap(clean_df['ratio_in_common'], clean_df['relevance'], bin_size=7)
+    feature_heatmap(clean_df['ratio_in_common'], clean_df['relevance'], bin_size=5)
     box_plot(clean_df, 'complete_ratio')
 
     # Render
     plt.show()
-
 
 
 if __name__ == '__main__':
