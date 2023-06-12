@@ -9,6 +9,7 @@ nltk = "*"
 matplotlib = "*"
 scipy = "*"
 scikit-learn = "*"
+gensim = "*"
 
 [dev-packages]
 

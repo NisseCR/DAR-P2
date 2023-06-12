@@ -4,6 +4,12 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from gensim.models import KeyedVectors
+from gensim.test.utils import datapath, get_tmpfile
+from gensim.scripts.glove2word2vec import glove2word2vec
 
 # Pandas settings
 pd.options.display.max_columns = 10
@@ -19,10 +25,15 @@ STOP_LIST = set(stopwords.words() + [*string.punctuation])
 
 
 # <editor-fold desc="Import data">
-def read_data() -> pd.DataFrame:
+def read_data(top: int = None) -> pd.DataFrame:
     query_df = pd.read_csv('./data/query_product.csv', encoding='latin1')
     product_df = pd.read_csv('./data/product_descriptions.csv', encoding='latin1')
     df = pd.merge(query_df, product_df, on='product_uid', how='left')
+
+    # Take top n elements when testing
+    if top is not None:
+        df = df.head(top)
+
     return df
 # </editor-fold>
 
@@ -83,7 +94,7 @@ def export(df: pd.DataFrame):
 
 def preprocess(doc_name: str):
     # Read from csv
-    df = read_data()
+    df = read_data(20)
 
     # Rename document column
     df = df.rename(columns={doc_name: 'doc', 'search_term': 'query'})
@@ -116,4 +127,3 @@ def test():
 
 if __name__ == '__main__':
     preprocess('product_title')
-    # test()
