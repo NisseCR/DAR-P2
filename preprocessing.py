@@ -6,6 +6,9 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from sklearn.metrics import jaccard_score
 from gensim.models import KeyedVectors
 from gensim.scripts.glove2word2vec import glove2word2vec
 from sklearn.metrics.pairwise import cosine_similarity
@@ -76,6 +79,39 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
 
 # <editor-fold desc="Add regression features">
+# possible features to add/explore:
+# [ ] measurement shit -> 100feet is similar to 120ft
+# [ ] colour similarity (nicks idee)
+# [ ] word count
+# [ ] avg word length in search
+# [ ] number of characters
+# [ ] jaccard between search and document
+# [ ] cosin coefficient between search and document (zie site van nick)
+# [ ] Last word in query in document field (example: red power drill, drill is most important term)
+# [ ] Vector space model shit?
+# [ ] Language model -> dirichlet, absolute and jelinek miller something
+# [ ] okapi BM25
+# [ ] Mischien words in common vervangen met tfidf
+# [ ] (sum, min, max) of (tf, idf, tf-idf) for the search query in each of the text field (zie site)
+
+def word_count(l: list[str]) -> int:
+    return len(l)
+
+
+def char_count(l : list[str]) -> int:
+    return sum([len(i) for i in l])
+
+
+def avg_char_count(l : list[str]) -> float:
+    return char_count(l)/word_count(l)
+
+
+def jac(query: list[str], doc: list[str]) -> float:
+    q_set = set(query)
+    d_set = set(doc)
+    return len(q_set.intersection(d_set))/len(q_set.union(d_set))
+
+
 def words_in_common(query: list[str], doc: list[str]) -> int:
     return len(set(query).intersection(doc))
 
@@ -103,6 +139,10 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # df['query_vector'] = df['query'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
     # df['doc_vector'] = df['doc'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
     # df['sentence_cosine_similarity'] = df.apply(lambda r: get_vector_similarity(r['query_vector'], r['doc_vector']), axis=1)
+    df['word_count'] = df.apply(lambda r: word_count(r['doc']), axis=1)
+    df['char_count'] = df.apply(lambda r: char_count(r['doc']), axis=1)
+    df['avg_char_count'] = df.apply(lambda r: avg_char_count(r['doc']), axis=1)
+    df['jac'] = df.apply(lambda r: jac(r['query'], r['doc']), axis=1)
     return df
 # </editor-fold>
 
