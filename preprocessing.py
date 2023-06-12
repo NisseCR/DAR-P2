@@ -94,7 +94,9 @@ def avg_char_count(l : list[str]) -> float:
 
 
 def jac(query: list[str], doc: list[str]) -> float:
-    return jaccard_score(query, doc)
+    q_set = set(query)
+    d_set = set(doc)
+    return len(q_set.intersection(d_set))/len(q_set.union(d_set))
 
 
 def words_in_common(query: list[str], doc: list[str]) -> int:
@@ -110,6 +112,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df['word_count'] = df.apply(lambda r: word_count(r['doc']), axis=1)
     df['char_count'] = df.apply(lambda r: char_count(r['doc']), axis=1)
     df['avg_char_count'] = df.apply(lambda r: avg_char_count(r['doc']), axis=1)
+    df['jac'] = df.apply(lambda r: jac(r['query'], r['doc']), axis=1)
     return df
 # </editor-fold>
 
