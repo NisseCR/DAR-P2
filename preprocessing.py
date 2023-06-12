@@ -65,10 +65,22 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
 
 # <editor-fold desc="Add regression features">
-# possible features to add:
+# possible features to add/explore:
 # [ ] measurement shit -> 100feet is similar to 120ft
 # [ ] colour similarity (nicks idee)
-# [ ] word count (zie bestandje)
+# [ ] word count
+# [ ] avg word len search
+# [ ] number of characters
+# [ ] jaccard between search and document
+# [ ] cosin coefficient between search and document (zie site van nick)
+# [ ] Last word in query in document field (example: red power drill, drill is most important term)
+# [ ] Vector space model shit?
+# [ ] Language model -> dirichlet, absolute and jelinek miller something
+# [ ] okapi BM25
+# [ ] Mischien words in common vervangen met tfidf
+# [ ] (sum, min, max) of (tf, idf, tf-idf) for the search query in each of the text field (zie site)
+
+
 
 def words_in_common(query: list[str], doc: list[str]) -> int:
     return len(set(query).intersection(doc))
