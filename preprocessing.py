@@ -7,6 +7,7 @@ from nltk.stem import PorterStemmer
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+from sklearn.metrics import jaccard_score
 from gensim.models import KeyedVectors
 from gensim.test.utils import datapath, get_tmpfile
 from gensim.scripts.glove2word2vec import glove2word2vec
@@ -69,7 +70,7 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 # [ ] measurement shit -> 100feet is similar to 120ft
 # [ ] colour similarity (nicks idee)
 # [ ] word count
-# [ ] avg word len search
+# [ ] avg word length in search
 # [ ] number of characters
 # [ ] jaccard between search and document
 # [ ] cosin coefficient between search and document (zie site van nick)
@@ -80,6 +81,20 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 # [ ] Mischien words in common vervangen met tfidf
 # [ ] (sum, min, max) of (tf, idf, tf-idf) for the search query in each of the text field (zie site)
 
+def word_count(l: list[str]) -> int:
+    return len(l)
+
+
+def char_count(l : list[str]) -> int:
+    return sum([len(i) for i in l])
+
+
+def avg_char_count(l : list[str]) -> float:
+    return char_count(l)/word_count(l)
+
+
+def jac(query: list[str], doc: list[str]) -> float:
+    return jaccard_score(query, doc)
 
 
 def words_in_common(query: list[str], doc: list[str]) -> int:
@@ -92,6 +107,9 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df['words_in_common'] = df.apply(lambda r: words_in_common(r['query'], r['doc']), axis=1)
     df['ratio_in_common'] = df['words_in_common'] / df['len_of_query']
     df['complete_ratio'] = df['ratio_in_common'] == 1
+    df['word_count'] = df.apply(lambda r: word_count(r['doc']), axis=1)
+    df['char_count'] = df.apply(lambda r: char_count(r['doc']), axis=1)
+    df['avg_char_count'] = df.apply(lambda r: avg_char_count(r['doc']), axis=1)
     return df
 # </editor-fold>
 
