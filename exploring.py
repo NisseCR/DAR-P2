@@ -32,7 +32,7 @@ def text_distribution(ser: pd.Series):
 
 
 def feature_heatmap(x: pd.Series, y: pd.Series, bin_size):
-    plt.hist2d(x, y, (bin_size, bin_size), cmap=plt.cm.jet)
+    plt.hist2d(x, y, (bin_size, bin_size), cmap='magma')
     plt.colorbar()
     plt.title('Feature heatmap')
     plt.xlabel(x.name)
@@ -63,7 +63,7 @@ def explore():
     query_df, product_df, clean_df = read_data()
 
     # Preprocessed data
-    feature_heatmap(clean_df['ratio_in_common'], clean_df['relevance'], bin_size=5)
+    feature_heatmap(clean_df['embedding_cos_sim'], clean_df['relevance'], bin_size=10)
     box_plot(clean_df, 'complete_ratio')
 
     # Render
