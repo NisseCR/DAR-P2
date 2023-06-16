@@ -15,7 +15,7 @@ def read_data() -> pd.DataFrame:
 
 
 def train(df: pd.DataFrame):
-    X = df['complete_ratio'].to_numpy()
+    X = df['ratio_in_common'].to_numpy()
     y = df['relevance'].to_numpy()
 
     X = X.reshape(-1, 1)
