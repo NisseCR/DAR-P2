@@ -105,6 +105,15 @@ def calculate_idf(df: pd.DataFrame):
     N = len(df2)
     return {word: math.log2((N-n+0.5)/(n+0.5)+1) for word, n in tf}
 
+def okapiBM25(d: list[str],q: list[str], idf:dict[str, int], avg_dl: float):
+    sum([okapiSingleScore(query, d, idf, avg_dl) for query in q])
+
+
+def okapiSingleScore(q: str, d:list[str], idf:dict[str, int], avg_dl: float):
+    f = d.count(q)
+    k_1 = 1.6
+    b = 0.75
+    return idf[q]*(f*(k_1+1))/(f+k_1*(1-b+b*len(d)/avg_dl))
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Bais features
