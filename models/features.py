@@ -120,6 +120,21 @@ def okapiSingleScore(q: str, d:list[str], idf:dict[str, int], avg_dl: float):
     return idf_*(f*(k_1+1))/(f+k_1*(1-b+b*len(d)/avg_dl))
 
 
+def tf_idf(q: list[str], d: list[str], idf: dict[str, int]):
+    res = 0
+    for q_word in q:
+        tf = 0
+        if q_word in idf:
+            idf_ = idf[q_word]
+        else:
+            idf_ = 11.5 #magic numberraosdruasdfjasdf
+        for d_word in d:
+            if d_word == q_word:
+                tf += 1
+        res += tf*idf_
+    return res
+
+
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Bais features
     df['len_of_query'] = df['query_stem'].apply(len)
@@ -133,6 +148,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     idf = calculate_idf(unique_products)
     avg_doc_len = sum([len(row['doc']) for _,row in unique_products.iterrows()]) #vervang dit, niet zo efficent
     df['okapiBM25'] = df.apply(lambda r: okapiBM25(r['doc_stem'], r['query_stem'], idf, avg_doc_len), axis=1)
+    df['tf-idf'] = df.apply(lambda r: tf_idf(r['query_stem'], r['doc_stem'], idf), axis=1)
     # Embedding metrics
     df = add_embedding_feature(df)
 
