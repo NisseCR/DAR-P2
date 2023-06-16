@@ -92,28 +92,33 @@ def add_embedding_feature(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def calculate_idf(df: pd.DataFrame):
+def calculate_idf(df3: pd.DataFrame):
     tf = {}
-    df2 = pd.unique(df['product_uid'])
-    df3 = pd.merge(df2,     df,     on='product_uid', how='inner')
     for _, row in df3.iterrows():
         for word in row['doc']:
             if word in tf:
                 tf[word] += 1
             else:
                 tf[word] = 0
-    N = len(df2)
-    return {word: math.log2((N-n+0.5)/(n+0.5)+1) for word, n in tf}
+    N = len(df3)
+    return {word: math.log2((N-n+0.5)/(n+0.5)+1) for word, n in tf.items()}
+
 
 def okapiBM25(d: list[str],q: list[str], idf:dict[str, int], avg_dl: float):
-    sum([okapiSingleScore(query, d, idf, avg_dl) for query in q])
+    return sum([okapiSingleScore(query, d, idf, avg_dl) for query in q])
 
 
 def okapiSingleScore(q: str, d:list[str], idf:dict[str, int], avg_dl: float):
     f = d.count(q)
     k_1 = 1.6
     b = 0.75
-    return idf[q]*(f*(k_1+1))/(f+k_1*(1-b+b*len(d)/avg_dl))
+    not_found_value = 11.5
+    if q in idf:
+        idf_ = idf[q]
+    else:
+        idf_ = not_found_value
+    return idf_*(f*(k_1+1))/(f+k_1*(1-b+b*len(d)/avg_dl))
+
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Bais features
@@ -122,7 +127,12 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df['words_in_common'] = df.apply(lambda r: words_in_common(r['query_stem'], r['doc_stem']), axis=1)
     df['ratio_in_common'] = df['words_in_common'] / df['len_of_query']
     df['complete_ratio'] = df['ratio_in_common'] == 1
-    idf = calculate_idf(df)
+    df2 = pd.unique(df['product_uid'])
+    df3 = pd.DataFrame({'product_uid':df2})
+    unique_products = pd.merge(df3, df, on='product_uid', how='inner')
+    idf = calculate_idf(unique_products)
+    avg_doc_len = sum([len(row['doc']) for _,row in unique_products.iterrows()]) #vervang dit, niet zo efficent
+    df['okapiBM25'] = df.apply(lambda r: okapiBM25(r['doc_stem'], r['query_stem'], idf, avg_doc_len), axis=1)
     # Embedding metrics
     df = add_embedding_feature(df)
 
