@@ -85,15 +85,17 @@ def get_embedding_feature(query: list[str], doc: list[str]) -> float:
 
 
 def add_embedding_feature(df: pd.DataFrame) -> pd.DataFrame:
+    # TODO add seperate columns for euclidian distance
+    # TODO weighted average of vectors
     df['embedding_cos_sim'] = df.apply(lambda r: get_embedding_feature(r['query'], r['doc']), axis=1)
     return df
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Bais features
-    df['len_of_query'] = df['query'].apply(len)
-    df['len_of_doc'] = df['doc'].apply(len)
-    df['words_in_common'] = df.apply(lambda r: words_in_common(r['query'], r['doc']), axis=1)
+    df['len_of_query'] = df['query_stem'].apply(len)
+    df['len_of_doc'] = df['doc_stem'].apply(len)
+    df['words_in_common'] = df.apply(lambda r: words_in_common(r['query_stem'], r['doc_stem']), axis=1)
     df['ratio_in_common'] = df['words_in_common'] / df['len_of_query']
     df['complete_ratio'] = df['ratio_in_common'] == 1
 
