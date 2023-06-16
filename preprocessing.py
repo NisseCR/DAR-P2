@@ -82,10 +82,10 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 # possible features to add/explore:
 # [ ] measurement shit -> 100feet is similar to 120ft
 # [ ] colour similarity (nicks idee)
-# [ ] word count
-# [ ] avg word length in search
-# [ ] number of characters
-# [ ] jaccard between search and document
+# [x] word count
+# [x] avg word length
+# [x] number of characters
+# [x] jaccard between search and document
 # [ ] cosin coefficient between search and document (zie site van nick)
 # [ ] Last word in query in document field (example: red power drill, drill is most important term)
 # [ ] Vector space model shit?
@@ -93,6 +93,17 @@ def data_preprocessing(df: pd.DataFrame, col: str) -> pd.DataFrame:
 # [ ] okapi BM25
 # [ ] Mischien words in common vervangen met tfidf
 # [ ] (sum, min, max) of (tf, idf, tf-idf) for the search query in each of the text field (zie site)
+
+def okapiBM25(d: list[str],q: list[str], idf:dict[str, int], avg_dl: float):
+    sum([okapiSingleScore(query, d, idf, avg_dl) for query in q])
+
+
+def okapiSingleScore(q: str, d:list[str], idf:dict[str, int], avg_dl: float):
+    f = d.count(q)
+    k_1 = 1.6
+    b = 0.75
+    return idf[q]*(f*(k_1+1))/(f+k_1*(1-b+b*len(d)/avg_dl))
+
 
 def word_count(l: list[str]) -> int:
     return len(l)
