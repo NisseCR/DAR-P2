@@ -13,6 +13,7 @@ from sklearn.metrics import jaccard_score
 from gensim.models import KeyedVectors
 from gensim.scripts.glove2word2vec import glove2word2vec
 from sklearn.metrics.pairwise import cosine_similarity
+import math
 
 # <editor-fold desc="Setup">
 # Embedding files
@@ -91,6 +92,20 @@ def add_embedding_feature(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def calculate_idf(df: pd.DataFrame):
+    tf = {}
+    df2 = pd.unique(df['product_uid'])
+    df3 = pd.merge(df2,     df,     on='product_uid', how='inner')
+    for _, row in df3.iterrows():
+        for word in row['doc']:
+            if word in tf:
+                tf[word] += 1
+            else:
+                tf[word] = 0
+    N = len(df2)
+    return {word: math.log2((N-n+0.5)/(n+0.5)+1) for word, n in tf}
+
+
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Bais features
     df['len_of_query'] = df['query_stem'].apply(len)
@@ -98,7 +113,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df['words_in_common'] = df.apply(lambda r: words_in_common(r['query_stem'], r['doc_stem']), axis=1)
     df['ratio_in_common'] = df['words_in_common'] / df['len_of_query']
     df['complete_ratio'] = df['ratio_in_common'] == 1
-
+    idf = calculate_idf(df)
     # Embedding metrics
     df = add_embedding_feature(df)
 
