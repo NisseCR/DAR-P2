@@ -151,12 +151,19 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # df['query_vector'] = df['query'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
     # df['doc_vector'] = df['doc'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
     # df['sentence_cosine_similarity'] = df.apply(lambda r: get_vector_similarity(r['query_vector'], r['doc_vector']), axis=1)
+    idf = calculate_idf(df)
     df['word_count'] = df.apply(lambda r: word_count(r['doc']), axis=1)
     df['char_count'] = df.apply(lambda r: char_count(r['doc']), axis=1)
     df['avg_char_count'] = df.apply(lambda r: avg_char_count(r['doc']), axis=1)
     df['jac'] = df.apply(lambda r: jac(r['query'], r['doc']), axis=1)
     return df
 # </editor-fold>
+
+
+def calculate_idf(df: pd.DataFrame):
+    idf = {}
+    pd.unique(df['product_id'])
+    return idf
 
 
 # <editor-fold desc="Truncate data">
