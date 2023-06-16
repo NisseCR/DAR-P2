@@ -22,6 +22,7 @@ pd.options.display.max_colwidth = 30
 # NLTK downloads
 nltk.download('stopwords')
 nltk.download('punkt')
+nltk.download('wordnet')
 
 # Data cleaning constants
 PS = PorterStemmer()
