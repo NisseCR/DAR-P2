@@ -31,7 +31,7 @@ def feature_heatmap(df: pd.DataFrame, x: str, y: str, bin_size):
 
 
 def box_plot(df, col: str):
-    df.boxplot(column=col, by='relevance')
+    df.boxplot(column='relevance', by=col)
     plt.show()
 
 
@@ -45,8 +45,8 @@ def pair(df: pd.DataFrame):
 def hist(df: pd.DataFrame, col: str, discrete: bool = False):
     compare_col = 'relevance_class'
     hue_order = ['high', 'low']
-    sn.histplot(df[[col, compare_col]], x=col, hue=compare_col, hue_order=hue_order, stat='count', multiple='stack',
-                discrete=discrete)
+    sn.histplot(data=df[[col, compare_col]], x=col, hue=compare_col, hue_order=hue_order, stat='count',
+                multiple='stack', discrete=discrete)
     plt.show()
 
 
@@ -65,29 +65,33 @@ def explore():
 
     # Plot
     # Hists
-    hist(train_df, 'word_count_title', discrete=True)
-    hist(train_df, 'word_count_description', discrete=True)
+    # hist(train_df, 'word_count_title', discrete=True)
+    # hist(train_df, 'word_count_description', discrete=True)
 
-    hist(train_df, 'word_count_title', discrete=True)
-    hist(train_df, 'word_count_description', discrete=True)
+    # hist(train_df, 'word_count_title', discrete=True)
+    # hist(train_df, 'word_count_description', discrete=True)
 
-    hist(train_df, 'words_in_common_query_title', discrete=True)
-    hist(train_df, 'words_in_common_query_description', discrete=True)
+    # hist(train_df, 'words_in_common_query_title', discrete=True)
+    # hist(train_df, 'words_in_common_query_description', discrete=True)
 
-    hist(train_df, 'ratio_words_in_common_query_title', discrete=False)
-    hist(train_df, 'ratio_words_in_common_query_description', discrete=False)
+    # hist(train_df, 'ratio_words_in_common_query_title', discrete=False)
+    # hist(train_df, 'ratio_words_in_common_query_description', discrete=False)
+    #
+    # hist(train_df, 'numbers_in_common_query_title', discrete=True)
+    # hist(train_df, 'numbers_in_common_query_description', discrete=True)
 
-    hist(train_df, 'numbers_in_common_query_title', discrete=True)
-    hist(train_df, 'numbers_in_common_query_description', discrete=True)
+    hist(train_df, 'glove_cos_sim', discrete=False)
 
     # Heatmap
     feature_heatmap(train_df, 'ratio_words_in_common_query_title', 'relevance', bin_size=10)
     feature_heatmap(train_df, 'ratio_words_in_common_query_description', 'relevance', bin_size=10)
+    feature_heatmap(train_df, 'glove_cos_sim', 'relevance', bin_size=5)
 
-    feature_heatmap(train_df, 'word_count_title', 'relevance', bin_size=10)
+    # Box
+    # box_plot(train_df, 'numbers_in_common_query_title')
 
-    # box_plot(train_df, 'ratio_in_common_query_title')
-    # pair(train_df)
+    # Scatter
+    # scatter(train_df, 'glove_cos_sim')
 
 
 if __name__ == '__main__':

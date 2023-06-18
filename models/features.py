@@ -87,36 +87,34 @@ def add_jaccard(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df
 
 
-def add_word_vectors(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    return df
-
-
-def get_sentence_vector(model: KeyedVectors, words: list[str]) -> ndarray | None:
-    words = [word for word in words if word in model]
-
-    if len(words) == 0:
-        return None
-
-    return np.mean(model[words], axis=0)
-
-
 def get_vector_similarity(x, y):
     return cosine_similarity(x.reshape(1, -1), y.reshape(1, -1))[0][0]
 
 
-def get_embedding_feature(query: list[str], doc: list[str]) -> float:
-    query_vector = get_sentence_vector(WORD_VECTORS, query)
-    doc_vector = get_sentence_vector(WORD_VECTORS, doc)
+def get_document_vector(model: KeyedVectors, tokens: list[str]) -> ndarray | None:
+    words = [word for word in tokens if word in model]
 
-    if query_vector is None or doc_vector is None:
-        return 0
+    if len(words) == 0:
+        return None
 
-    return get_vector_similarity(query_vector, doc_vector)
+    vectors = model[words]
+    return np.concatenate([
+        np.mean(vectors, axis=0),
+        np.amax(vectors, axis=0)
+    ])
 
 
-def add_embedding_feature(df: pd.DataFrame) -> pd.DataFrame:
-    # TODO weighted average of vectors
-    df['embedding_cos_sim'] = df.apply(lambda r: get_embedding_feature(r['query'], r['doc']), axis=1)
+def add_cos_sim(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    def cos_sim(query: list[str], document: list[str]):
+        qv = get_document_vector(WORD_VECTORS, query)
+        dv = get_document_vector(WORD_VECTORS, document)
+
+        if qv is None or dv is None:
+            return 0
+
+        return get_vector_similarity(qv, dv)
+
+    df['glove_cos_sim'] = df.apply(lambda r: cos_sim(r['query_std'], r[f'{col}_std']), axis=1)
     return df
 
 
@@ -196,6 +194,10 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     print('Number comparison')
     df = add_numbers_in_common(df, 'title')
     df = add_numbers_in_common(df, 'description')
+
+    # Word vectors
+    print('Word vectors')
+    df = add_cos_sim(df, 'title')
     return df
 
 
@@ -209,7 +211,6 @@ def _add_features(df: pd.DataFrame) -> pd.DataFrame:
     df['okapiBM25'] = df.apply(lambda r: okapiBM25(r['doc_stem'], r['query_stem'], idf, avg_doc_len), axis=1)
     df['tf-idf'] = df.apply(lambda r: tf_idf(r['query_stem'], r['doc_stem'], idf), axis=1)
     # Embedding metrics
-    df = add_embedding_feature(df)
 
     # df['query_vector'] = df['query'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
     # df['doc_vector'] = df['doc'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))

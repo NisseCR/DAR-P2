@@ -42,6 +42,7 @@ def tokenize_sentence(sentence: str) -> list[str]:
         word
         for word in word_tokenize(sentence.lower())
         if word not in STOP_LIST
+        and not word.isdigit()
     ]
 
 
@@ -50,8 +51,13 @@ def stem_tokens(tokens: list[str]) -> list[str]:
 
 
 def tokenize(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    print('Isolate numbers')
     df[f'{col}_numbers'] = df[col].apply(isolate_numbers)
-    df[f'{col}_non_stem'] = df[col].apply(tokenize_sentence)
-    df[f'{col}'] = df[f'{col}_non_stem'].apply(stem_tokens)
+
+    print('Tokenize sentences')
+    df[f'{col}_std'] = df[col].apply(tokenize_sentence)
+
+    print('Apply stemming')
+    df[f'{col}'] = df[f'{col}_std'].apply(stem_tokens)
     return df
 
