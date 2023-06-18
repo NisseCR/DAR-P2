@@ -58,12 +58,13 @@ def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
     def words_in_common(query: list[str], document: list[str]) -> int:
         return len(set(query).intersection(document))
 
-    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(df['query'], df[col]), axis=1)
+    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(r['query'], r[col]), axis=1)
     return df
 
 
 def add_ratio_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'ratio_in_common_query_{col}'] = df[f'words_in_common_query_{col}'] / df[f'word_count_{col}']
+    df[f'ratio_in_common_query_{col}'] = df[f'words_in_common_query_{col}'] / df[f'word_count_query']
+    df[f'ratio_in_common_query_{col}'] = df[f'ratio_in_common_query_{col}'].fillna(0)
     return df
 
 
@@ -160,10 +161,27 @@ def classify_target(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
-    # df = add_word_count(df, 'query')
-    # df = add_word_count(df, 'title')
-    # df = add_words_in_common(df, 'title')
-    # df = add_ratio_in_common(df, 'title')
+    # Word count
+    print('Word count')
+    df = add_word_count(df, 'query')
+    df = add_word_count(df, 'title')
+    df = add_word_count(df, 'description')
+
+    # Character count
+    print('Character count')
+    df = add_char_count(df, 'query')
+    df = add_char_count(df, 'title')
+    df = add_char_count(df, 'description')
+    df = add_avg_char_count(df, 'query')
+    df = add_avg_char_count(df, 'title')
+    df = add_avg_char_count(df, 'description')
+
+    # Word comparison
+    print('Word comparison')
+    df = add_words_in_common(df, 'title')
+    df = add_words_in_common(df, 'description')
+    df = add_ratio_in_common(df, 'title')
+    df = add_ratio_in_common(df, 'description')
     return df
 
 

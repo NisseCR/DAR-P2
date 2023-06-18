@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from models.features import add_features, classify_target
 from models.tokenizer import tokenize
@@ -35,39 +36,62 @@ def add_backup(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def tokenize_data(df: pd.DataFrame) -> pd.DataFrame:
-    df = tokenize(df, 'title')
     df = tokenize(df, 'query')
+    df = tokenize(df, 'title')
+    df = tokenize(df, 'description')
     return df
 
 
 def preprocessing_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+    print('Rename columns')
     df = rename_columns(df)
+
+    print('Add backup')
     df = add_backup(df)
+
+    print('Tokenize data')
     df = tokenize_data(df)
+
+    print('Add features')
     df = classify_target(df)
     df = add_features(df)
     return df
 
 
-def export(df: pd.DataFrame):
-    df.to_csv('./data/data.csv')
+def export(df: pd.DataFrame, set_type: str):
+    df.to_csv(f'./data/{set_type}.csv')
 
 
-def preprocess(doc_name: str, top: int = None):
-    # Read
-    df = read_data(top)
-
+def preprocess_set(df: pd.DataFrame, set_type: str):
+    print(f'Preprocess {set_type}')
     # Preprocess
     df = preprocessing_pipeline(df)
 
     # Exporting
-    export(df)
+    export(df, set_type)
 
     # Debug
     print(df.columns)
     print(df.head(10))
 
 
+def preprocess(top: int = None):
+    # Read
+    df = read_data(top)
+
+    # Create train and test sets
+    if top is None:
+        training_size = 50000
+    else:
+        training_size = round(top * (3 / 4))
+
+    train_df, test_df = train_test_split(df, test_size=(len(df) - training_size), random_state=42)
+
+    # Preprocess
+    preprocess_set(train_df, 'train')
+    preprocess_set(test_df, 'test')
+
+
 if __name__ == '__main__':
-    preprocess('product_title', 20)
+    preprocess(top=None)
 

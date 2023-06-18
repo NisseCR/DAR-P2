@@ -45,6 +45,6 @@ def stem_tokens(tokens: list[str]) -> list[str]:
 
 def tokenize(df: pd.DataFrame, col: str) -> pd.DataFrame:
     df[f'{col}_non_stem'] = df[col].apply(tokenize_sentence)
-    df[f'{col}'] = df[col].apply(stem_tokens)
+    df[f'{col}'] = df[f'{col}_non_stem'].apply(stem_tokens)
     return df
 
