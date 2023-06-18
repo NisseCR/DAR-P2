@@ -1,3 +1,4 @@
+import os
 import string
 import pandas as pd
 import nltk
@@ -35,7 +36,6 @@ def tokenize_sentence(sentence: str) -> list[str]:
         word
         for word in word_tokenize(sentence.lower())
         if word not in STOP_LIST
-        and not word.isdigit()
     ]
 
 
@@ -44,7 +44,7 @@ def stem_tokens(tokens: list[str]) -> list[str]:
 
 
 def tokenize(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[col] = df[col].apply(tokenize_sentence)
-    df[f'{col}_stem'] = df[col].apply(stem_tokens)
+    df[f'{col}_non_stem'] = df[col].apply(tokenize_sentence)
+    df[f'{col}'] = df[col].apply(stem_tokens)
     return df
 

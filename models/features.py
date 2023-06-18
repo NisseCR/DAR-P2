@@ -1,14 +1,7 @@
-import string
+import os.path
 import pandas as pd
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-from nltk.stem import WordNetLemmatizer
 import numpy as np
-import matplotlib.pyplot as plt
 from numpy import ndarray
-from sklearn.manifold import TSNE
 from sklearn.metrics import jaccard_score
 from gensim.models import KeyedVectors
 from gensim.scripts.glove2word2vec import glove2word2vec
@@ -19,7 +12,9 @@ import math
 # Embedding files
 GLOVE_FILE = "./embeddings/glove.6B.50d.txt"  # Path to the GloVe embeddings file
 W2V_FILE = "./embeddings/glove.word2vec.50d.txt"  # Path to the w2v embeddings file
-_ = glove2word2vec(GLOVE_FILE, W2V_FILE)
+
+if not os.path.exists(W2V_FILE):
+    glove2word2vec(GLOVE_FILE, W2V_FILE)
 
 # Word embeddings
 WORD_VECTORS = KeyedVectors.load_word2vec_format(W2V_FILE, binary=False)
@@ -40,26 +35,50 @@ WORD_VECTORS = KeyedVectors.load_word2vec_format(W2V_FILE, binary=False)
 # [ ] Mischien words in common vervangen met tfidf
 # [ ] (sum, min, max) of (tf, idf, tf-idf) for the search query in each of the text field (zie site)
 
-def word_count(l: list[str]) -> int:
-    return len(l)
+
+def add_word_count(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'word_count_{col}'] = df[col].apply(len)
+    return df
 
 
-def char_count(l : list[str]) -> int:
-    return sum([len(i) for i in l])
+def add_char_count(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    def char_count(tokens: list[str]) -> int:
+        return sum([len(word) for word in tokens])
+
+    df[f'char_count_{col}'] = df[col].apply(char_count)
+    return df
 
 
-def avg_char_count(l : list[str]) -> float:
-    return char_count(l)/word_count(l)
+def add_avg_char_count(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'avg_char_count_{col}'] = df[f'char_count_{col}'] / df[f'word_count_{col}']
+    return df
 
 
-def jac(query: list[str], doc: list[str]) -> float:
-    q_set = set(query)
-    d_set = set(doc)
-    return len(q_set.intersection(d_set))/len(q_set.union(d_set))
+def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    def words_in_common(query: list[str], document: list[str]) -> int:
+        return len(set(query).intersection(document))
+
+    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(df['query'], df[col]), axis=1)
+    return df
 
 
-def words_in_common(query: list[str], doc: list[str]) -> int:
-    return len(set(query).intersection(doc))
+def add_ratio_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'ratio_in_common_query_{col}'] = df[f'words_in_common_query_{col}'] / df[f'word_count_{col}']
+    return df
+
+
+def add_jaccard(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    def jaccard(query: list[str], document: list[str]) -> float:
+        q_set = set(query)
+        d_set = set(document)
+        return len(q_set.intersection(d_set)) / len(q_set.union(d_set))
+
+    df[f'jaccard_query_{col}'] = df.apply(lambda r: jaccard(df['query_stem'], df[f'{col}_stem']), axis=1)
+    return df
+
+
+def add_word_vectors(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    return df
 
 
 def get_sentence_vector(model: KeyedVectors, words: list[str]) -> ndarray | None:
@@ -86,7 +105,6 @@ def get_embedding_feature(query: list[str], doc: list[str]) -> float:
 
 
 def add_embedding_feature(df: pd.DataFrame) -> pd.DataFrame:
-    # TODO add seperate columns for euclidian distance
     # TODO weighted average of vectors
     df['embedding_cos_sim'] = df.apply(lambda r: get_embedding_feature(r['query'], r['doc']), axis=1)
     return df
@@ -135,13 +153,22 @@ def tf_idf(q: list[str], d: list[str], idf: dict[str, int]):
     return res
 
 
+def classify_target(df: pd.DataFrame) -> pd.DataFrame:
+    mean = df['relevance'].mean()
+    df['relevance_class'] = np.where(df['relevance'] >= mean, 'high', 'low')
+    return df
+
+
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
-    # Bais features
-    df['len_of_query'] = df['query_stem'].apply(len)
-    df['len_of_doc'] = df['doc_stem'].apply(len)
-    df['words_in_common'] = df.apply(lambda r: words_in_common(r['query_stem'], r['doc_stem']), axis=1)
-    df['ratio_in_common'] = df['words_in_common'] / df['len_of_query']
-    df['complete_ratio'] = df['ratio_in_common'] == 1
+    # df = add_word_count(df, 'query')
+    # df = add_word_count(df, 'title')
+    # df = add_words_in_common(df, 'title')
+    # df = add_ratio_in_common(df, 'title')
+    return df
+
+
+def _add_features(df: pd.DataFrame) -> pd.DataFrame:
+    # Basic features
     df2 = pd.unique(df['product_uid'])
     df3 = pd.DataFrame({'product_uid':df2})
     unique_products = pd.merge(df3, df, on='product_uid', how='inner')

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from models.features import add_features
+from models.features import add_features, classify_target
 from models.tokenizer import tokenize
 
 # <editor-fold desc="Setup">
@@ -22,15 +22,30 @@ def read_data(top: int = None) -> pd.DataFrame:
     return df
 
 
-def calculate_idf(df: pd.DataFrame):
-    idf = {}
-    pd.unique(df['product_id'])
-    return idf
+def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
+    return df.rename(columns={'product_title': 'title', 'product_description': 'description', 'search_term': 'query'})
 
 
-# <editor-fold desc="Truncate data">
-def truncate_unusable_data(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.dropna(subset=['ratio_in_common'])
+def add_backup(df: pd.DataFrame) -> pd.DataFrame:
+    # Save original data
+    df['query_org'] = df['query']
+    df['title_org'] = df['title']
+    df['description_org'] = df['description']
+    return df
+
+
+def tokenize_data(df: pd.DataFrame) -> pd.DataFrame:
+    df = tokenize(df, 'title')
+    df = tokenize(df, 'query')
+    return df
+
+
+def preprocessing_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+    df = rename_columns(df)
+    df = add_backup(df)
+    df = tokenize_data(df)
+    df = classify_target(df)
+    df = add_features(df)
     return df
 
 
@@ -38,30 +53,21 @@ def export(df: pd.DataFrame):
     df.to_csv('./data/data.csv')
 
 
-def preprocess(doc_name: str):
-    # Read from csv
-    df = read_data()
+def preprocess(doc_name: str, top: int = None):
+    # Read
+    df = read_data(top)
 
-    # Rename document column
-    df = df.rename(columns={doc_name: 'doc', 'search_term': 'query'})
-    df = df[['id', 'product_uid', 'query', 'doc', 'relevance']]
-
-    # NPL preprocessing pipeline
-    df = tokenize(df, 'doc')
-    df = tokenize(df, 'query')
-
-    # Feature extraction
-    df = add_features(df)
-
-    # Truncate data
-    df = truncate_unusable_data(df)
+    # Preprocess
+    df = preprocessing_pipeline(df)
 
     # Exporting
     export(df)
+
+    # Debug
     print(df.columns)
     print(df.head(10))
 
 
 if __name__ == '__main__':
-    preprocess('product_title')
+    preprocess('product_title', 20)
 
