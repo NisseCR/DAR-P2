@@ -74,12 +74,15 @@ def explore():
     hist(train_df, 'words_in_common_query_title', discrete=True)
     hist(train_df, 'words_in_common_query_description', discrete=True)
 
-    hist(train_df, 'ratio_in_common_query_title', discrete=False)
-    hist(train_df, 'ratio_in_common_query_description', discrete=False)
+    hist(train_df, 'ratio_words_in_common_query_title', discrete=False)
+    hist(train_df, 'ratio_words_in_common_query_description', discrete=False)
+
+    hist(train_df, 'numbers_in_common_query_title', discrete=True)
+    hist(train_df, 'numbers_in_common_query_description', discrete=True)
 
     # Heatmap
-    feature_heatmap(train_df, 'ratio_in_common_query_title', 'relevance', bin_size=10)
-    feature_heatmap(train_df, 'ratio_in_common_query_description', 'relevance', bin_size=10)
+    feature_heatmap(train_df, 'ratio_words_in_common_query_title', 'relevance', bin_size=10)
+    feature_heatmap(train_df, 'ratio_words_in_common_query_description', 'relevance', bin_size=10)
 
     feature_heatmap(train_df, 'word_count_title', 'relevance', bin_size=10)
 

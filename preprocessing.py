@@ -63,7 +63,7 @@ def export(df: pd.DataFrame, set_type: str):
 
 
 def preprocess_set(df: pd.DataFrame, set_type: str):
-    print(f'Preprocess {set_type}')
+    print(f'\n>> Preprocess {set_type}')
     # Preprocess
     df = preprocessing_pipeline(df)
 

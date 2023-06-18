@@ -62,9 +62,18 @@ def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df
 
 
-def add_ratio_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'ratio_in_common_query_{col}'] = df[f'words_in_common_query_{col}'] / df[f'word_count_query']
-    df[f'ratio_in_common_query_{col}'] = df[f'ratio_in_common_query_{col}'].fillna(0)
+def add_ratio_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'ratio_words_in_common_query_{col}'] = df[f'words_in_common_query_{col}'] / df[f'word_count_query']
+    df[f'ratio_words_in_common_query_{col}'] = df[f'ratio_words_in_common_query_{col}'].fillna(0)
+    return df
+
+
+def add_numbers_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    def numbers_in_common(query: list[int], document: list[int]) -> int:
+        return len(set(query).intersection(document))
+
+    df[f'numbers_in_common_query_{col}'] = df.apply(
+        lambda r: numbers_in_common(r['query_numbers'], r[f'{col}_numbers']), axis=1)
     return df
 
 
@@ -180,8 +189,13 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     print('Word comparison')
     df = add_words_in_common(df, 'title')
     df = add_words_in_common(df, 'description')
-    df = add_ratio_in_common(df, 'title')
-    df = add_ratio_in_common(df, 'description')
+    df = add_ratio_words_in_common(df, 'title')
+    df = add_ratio_words_in_common(df, 'description')
+
+    # Number / unit comparison
+    print('Number comparison')
+    df = add_numbers_in_common(df, 'title')
+    df = add_numbers_in_common(df, 'description')
     return df
 
 
