@@ -7,7 +7,6 @@ from scipy.interpolate import interpn
 import seaborn as sn
 import pandas as pd
 
-
 # Pandas settings
 pd.options.display.max_columns = 10
 pd.options.display.max_colwidth = 30
@@ -51,7 +50,7 @@ def hist(df: pd.DataFrame, col: str, discrete: bool = False):
     plt.show()
 
 
-def explore_raw(query_df: pd.DataFrame, product_df):
+def explore_raw(query_df: pd.DataFrame, product_df: pd.DataFrame):
     # print(query_df.info())
     # print(product_df.info())
     #
@@ -67,35 +66,75 @@ def explore_raw(query_df: pd.DataFrame, product_df):
     # plt.show()
 
     # Product id
-    print('\n Products')
-    print('unique products', len(query_df['product_uid'].unique()))
-    cs = query_df['product_uid'].value_counts().reset_index()
-    cs = cs.reset_index()
-    sn.lineplot(x='index', y='count', data=cs)
-    plt.xlabel('Product')
-    plt.show()
-    print('more occurrences', len(cs[cs['count'] > 1]))
-    print('median', cs['count'].median())
-    print('mean', cs['count'].mean())
+    # print('\n Products')
+    # print('unique products', len(query_df['product_uid'].unique()))
+    # cs = query_df['product_uid'].value_counts().reset_index()
+    # cs = cs.reset_index()
+    # sn.lineplot(x='index', y='count', data=cs)
+    # plt.xlabel('Product')
+    # plt.show()
+    # print('more occurrences', len(cs[cs['count'] > 1]))
+    # print('median', cs['count'].median())
+    # print('mean', cs['count'].mean())
 
     # Search term
-    print('\n Queries')
-    query_df['terms'] = query_df['search_term'].apply(lambda x: x.split())
-    query_df['term_count'] = query_df['terms'].apply(len)
-    sn.histplot(query_df, x='term_count', discrete=True)
-    plt.xlabel('Amount of words in search term')
+    # print('\n Queries')
+    # sn.histplot(query_df, x='term_count', discrete=True)
+    # plt.xlabel('Amount of words in search term')
+    # plt.show()
+    # qs = query_df['search_term'].value_counts().reset_index()
+    # qs = qs.reset_index()
+    # sn.lineplot(x='index', y='count', data=qs)
+    # plt.xlabel('Query')
+    # plt.show()
+    # print('max', query_df['term_count'].max())
+    # print('median', query_df['term_count'].median())
+    # print('mean', query_df['term_count'].mean())
+    # print('unique queries', len(query_df['search_term'].unique()))
+    # print('more occurrences', len(qs[qs['count'] > 1]))
+    # print('occurrence mean', qs['count'].mean())
+
+    # word occurrence
+    # ws = query_df['search_term'].apply(lambda x: x.split()).explode()
+    # ws = ws.value_counts().reset_index()
+    # print(ws)
+    # sn.barplot(data=ws.head(20), x='count', y='search_term')
+    # plt.show()
+    #
+    # # unit occurrence
+    # query_df['length'] = query_df['search_term'].apply(len)
+    # print('no words', query_df[query_df['length'] == 1])
+    # print(query_df.iloc[2924])
+
+    # # relevance
+    # sn.histplot(data=query_df, x='relevance')
+    # plt.show()
+    #
+    # uns = query_df['relevance'].value_counts().reset_index().sort_values(by='relevance')
+    # print(len(uns))
+    # print(uns)
+
+    # title
+    df = product_df.copy()
+    print(df.info())
+    print('unique stcs', len(df['product_description'].unique()))
+
+    df['words'] = df['product_description'].apply(lambda x: x.split())
+    df['word_count'] = df['words'].apply(len)
+    print('mean', df['word_count'].mean())
+    print('empty', len(df[df['word_count'] == 0]))
+
+    sn.histplot(data=df, x='word_count')
+    plt.xlabel('Amount of words in product description')
     plt.show()
-    qs = query_df['search_term'].value_counts().reset_index()
-    qs = qs.reset_index()
-    sn.lineplot(x='index', y='count', data=qs)
-    plt.xlabel('Query')
+
+    ws = df['words'].explode().value_counts().reset_index()
+    print(ws)
+    sn.barplot(data=ws.head(20), x='count', y='words')
     plt.show()
-    print('max', query_df['term_count'].max())
-    print('median', query_df['term_count'].median())
-    print('mean', query_df['term_count'].mean())
-    print('unique queries', len(query_df['search_term'].unique()))
-    print('more occurrences', len(qs[qs['count'] > 1]))
-    print('occurrence mean', qs['count'].mean())
+    print('total', ws['count'].sum())
+    print('total', ws['count'].head(4).sum())
+
 
 
 
