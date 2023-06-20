@@ -3,7 +3,7 @@ from modelling import model
 
 
 def main():
-    preprocess('product_title')
+    preprocess(5000)
     model()
 
 

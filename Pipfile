@@ -13,6 +13,7 @@ gensim = "*"
 pyparsing = "*"
 seaborn = "*"
 matplotlib-venn = "*"
+statsmodels = "*"
 
 [dev-packages]
 
