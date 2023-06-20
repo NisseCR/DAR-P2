@@ -1,4 +1,6 @@
 import os.path
+from typing import Callable
+
 import pandas as pd
 import numpy as np
 from numpy import ndarray
@@ -59,12 +61,17 @@ def words_in_common(query: list[str], document: list[str]) -> set[str]:
 
 
 def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'words_in_common_query_{col}'] = df.apply(lambda r: len(words_in_common(r['query'], r[col])), axis=1)
+    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(r['query'], r[col]), axis=1)
+    return df
+
+
+def add_count_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'count_in_common_query_{col}'] = df[f'words_in_common_query_{col}'].apply(len)
     return df
 
 
 def add_ratio_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'ratio_words_in_common_query_{col}'] = df[f'words_in_common_query_{col}'] / df[f'word_count_query']
+    df[f'ratio_words_in_common_query_{col}'] = df[f'count_in_common_query_{col}'] / df[f'word_count_query']
     df[f'ratio_words_in_common_query_{col}'] = df[f'ratio_words_in_common_query_{col}'].fillna(0)
     return df
 
@@ -144,9 +151,7 @@ def get_idf_scores(df: pd.DataFrame, col: str) -> dict[str, float]:
 
 
 def add_tf_idf(df: pd.DataFrame, col: str, IDFs: dict[str, float]) -> pd.DataFrame:
-    def get_tf_idf_score(query: list[str], document: list[str], IDFs: dict[str, float]) -> float:
-        in_common = words_in_common(query, document)
-
+    def tf_idf_score(in_common: set[str], document: list[str], IDFs: dict[str, float]) -> float:
         tf_idf = 0
 
         for word in in_common:
@@ -156,15 +161,26 @@ def add_tf_idf(df: pd.DataFrame, col: str, IDFs: dict[str, float]) -> pd.DataFra
 
         return tf_idf
 
-    df[f'tf_idf_query_{col}'] = df.apply(lambda r: get_tf_idf_score(r['query'], r[col], IDFs), axis=1)
+    df[f'tf_idf_query_{col}'] = df.apply(lambda r: tf_idf_score(r[f'words_in_common_query_{col}'], r[col], IDFs), axis=1)
     return df
 
 
-def okapiBM25(d: list[str],q: list[str], idf:dict[str, int], avg_dl: float):
+def add_f_length_match(df: pd.DataFrame, col: str, f: Callable, new_col: str) -> pd.DataFrame:
+    def longest_match(in_common: set[str]) -> int:
+        if len(in_common) == 0:
+            return 0
+
+        return len(f(in_common, key=len))
+
+    df[f'{new_col}_match_query_{col}'] = df[f'words_in_common_query_{col}'].apply(longest_match)
+    return df
+
+
+def okapiBM25(d: list[str], q: list[str], idf: dict[str, int], avg_dl: float):
     return sum([okapiSingleScore(query, d, idf, avg_dl) for query in q])
 
 
-def okapiSingleScore(q: str, d:list[str], idf:dict[str, int], avg_dl: float):
+def okapiSingleScore(q: str, d: list[str], idf: dict[str, int], avg_dl: float):
     f = d.count(q)
     k_1 = 1.6
     b = 0.75
@@ -176,21 +192,6 @@ def okapiSingleScore(q: str, d:list[str], idf:dict[str, int], avg_dl: float):
     return idf_*(f*(k_1+1))/(f+k_1*(1-b+b*len(d)/avg_dl))
 
 
-def tf_idf(q: list[str], d: list[str], idf: dict[str, int]):
-    res = 0
-    for q_word in q:
-        tf = 0
-        if q_word in idf:
-            idf_ = idf[q_word]
-        else:
-            idf_ = 11.5 #magic numberraosdruasdfjasdf
-        for d_word in d:
-            if d_word == q_word:
-                tf += 1
-        res += tf*idf_
-    return res
-
-
 def classify_target(df: pd.DataFrame) -> pd.DataFrame:
     mean = df['relevance'].mean()
     df['relevance_class'] = np.where(df['relevance'] >= mean, 'high', 'low')
@@ -198,6 +199,10 @@ def classify_target(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
+    # Words in common
+    df = add_words_in_common(df, 'title')
+    df = add_words_in_common(df, 'description')
+
     # Word count
     print('Word count')
     df = add_word_count(df, 'query')
@@ -215,8 +220,8 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Word comparison
     print('Word comparison')
-    df = add_words_in_common(df, 'title')
-    df = add_words_in_common(df, 'description')
+    df = add_count_in_common(df, 'title')
+    df = add_count_in_common(df, 'description')
     df = add_ratio_words_in_common(df, 'title')
     df = add_ratio_words_in_common(df, 'description')
 
@@ -234,36 +239,21 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     IDFs_description = get_idf_scores(df, 'description')
     df = add_tf_idf(df, 'description', IDFs_description)
 
+    # Length of match
+    df = add_f_length_match(df, 'title', max, 'max')
+    df = add_f_length_match(df, 'description', max, 'max')
+    df = add_f_length_match(df, 'title', min, 'min')
+    df = add_f_length_match(df, 'description', min, 'min')
+
     # Eventual features
-    df = df[[
-        'relevance',
-        'word_count_query',
-        'ratio_words_in_common_query_title',
-        'ratio_words_in_common_query_description',
-        'numbers_in_common_query_title',
-        'glove_cos_sim',
-        'tf_idf_query_description'
-    ]]
-    return df
-
-
-def _add_features(df: pd.DataFrame) -> pd.DataFrame:
-    # Basic features
-    df2 = pd.unique(df['product_uid'])
-    df3 = pd.DataFrame({'product_uid':df2})
-    unique_products = pd.merge(df3, df, on='product_uid', how='inner')
-    idf = calculate_idf(unique_products)
-    avg_doc_len = sum([len(row['doc']) for _,row in unique_products.iterrows()]) #vervang dit, niet zo efficent
-    df['okapiBM25'] = df.apply(lambda r: okapiBM25(r['doc_stem'], r['query_stem'], idf, avg_doc_len), axis=1)
-    df['tf-idf'] = df.apply(lambda r: tf_idf(r['query_stem'], r['doc_stem'], idf), axis=1)
-    # Embedding metrics
-
-    # df['query_vector'] = df['query'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
-    # df['doc_vector'] = df['doc'].apply(lambda s: get_sentence_vector(WORD_VECTORS, s))
-    # df['sentence_cosine_similarity'] = df.apply(lambda r: get_vector_similarity(r['query_vector'], r['doc_vector']), axis=1)
-    # df['word_count'] = df.apply(lambda r: word_count(r['doc']), axis=1)
-    # df['char_count'] = df.apply(lambda r: char_count(r['doc']), axis=1)
-    # df['avg_char_count'] = df.apply(lambda r: avg_char_count(r['doc']), axis=1)
-    # df['jac'] = df.apply(lambda r: jac(r['query'], r['doc']), axis=1)
+    # df = df[[
+    #     'relevance',
+    #     'word_count_query',
+    #     'ratio_words_in_common_query_title',
+    #     'ratio_words_in_common_query_description',
+    #     'numbers_in_common_query_title',
+    #     'glove_cos_sim',
+    #     'tf_idf_query_description'
+    # ]]
     return df
 
