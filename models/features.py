@@ -130,6 +130,30 @@ def calculate_idf(df3: pd.DataFrame):
     return {word: math.log2((N-n+0.5)/(n+0.5)+1) for word, n in tf.items()}
 
 
+def get_unique_documents(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    return df[['product_uid', col]].groupby('product_uid').agg(doc=(col, 'first'))
+
+
+def get_df_scores(df: pd.DataFrame) -> dict[str, int]:
+    DFs = {}
+    for _, row in df.iterrows():
+        for word in set(row['doc']):
+            if word in DFs:
+                DFs[word] += 1
+            else:
+                DFs[word] = 1
+
+    return DFs
+
+
+def get_idf_scores(df: pd.DataFrame, col: str) -> dict[str, int]:
+    df = df.copy()
+    df = get_unique_documents(df, col)
+    DFs = get_df_scores(df)
+    N = len(df)
+    return {word: math.log2(N / DF) for word, DF in DFs.items()}
+
+
 def okapiBM25(d: list[str],q: list[str], idf:dict[str, int], avg_dl: float):
     return sum([okapiSingleScore(query, d, idf, avg_dl) for query in q])
 
@@ -198,6 +222,20 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     # Word vectors
     print('Word vectors')
     df = add_cos_sim(df, 'title')
+
+    # TF IDF scores
+    print('TF IDF scores')
+    IDFs = get_idf_scores(df, 'description')
+
+    # Eventual features
+    df = df[[
+        'relevance',
+        'word_count_query',
+        'ratio_words_in_common_query_title',
+        'ratio_words_in_common_query_description',
+        'numbers_in_common_query_title',
+        'glove_cos_sim',
+    ]]
     return df
 
 
