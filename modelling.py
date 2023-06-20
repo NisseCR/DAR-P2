@@ -9,12 +9,32 @@ from sklearn.metrics import r2_score
 pd.options.display.max_columns = 10
 pd.options.display.max_colwidth = 30
 
+regression_features = ['len_of_query', 'len_of_doc', 'ratio_in_common', 'okapiBM25', 'embedding_cos_sim']
 
 def read_data() -> pd.DataFrame:
     return pd.read_csv('./data/data.csv', encoding='latin1')
 
 
 def train(df: pd.DataFrame):
+    X = df[regression_features].to_numpy()
+    y = df['relevance'].to_numpy()
+
+    #X = X.reshape(-1, 1)
+
+    regressor = LinearRegression()
+    regressor.fit(X, y)
+
+    predictions = regressor.predict(X)
+
+    for feature, value in zip(regression_features, regressor.coef_):
+        print(f"{feature} has coefficient: {value}")
+    print(f"intercept: {regressor.intercept_}")
+    explained_variation = r2_score(y, predictions)
+
+    print(f"Explained Variation (R-squared): {explained_variation:.4f}")
+
+
+def _train(df: pd.DataFrame):
     X = df['ratio_in_common'].to_numpy()
     y = df['relevance'].to_numpy()
 
