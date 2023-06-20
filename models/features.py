@@ -54,11 +54,12 @@ def add_avg_char_count(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df
 
 
-def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    def words_in_common(query: list[str], document: list[str]) -> int:
-        return len(set(query).intersection(document))
+def words_in_common(query: list[str], document: list[str]) -> set[str]:
+    return set(query).intersection(document)
 
-    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(r['query'], r[col]), axis=1)
+
+def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'words_in_common_query_{col}'] = df.apply(lambda r: len(words_in_common(r['query'], r[col])), axis=1)
     return df
 
 
@@ -83,7 +84,7 @@ def add_jaccard(df: pd.DataFrame, col: str) -> pd.DataFrame:
         d_set = set(document)
         return len(q_set.intersection(d_set)) / len(q_set.union(d_set))
 
-    df[f'jaccard_query_{col}'] = df.apply(lambda r: jaccard(df['query_stem'], df[f'{col}_stem']), axis=1)
+    df[f'jaccard_query_{col}'] = df.apply(lambda r: jaccard(r['query'], r[col]), axis=1)
     return df
 
 
@@ -118,18 +119,6 @@ def add_cos_sim(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df
 
 
-def calculate_idf(df3: pd.DataFrame):
-    tf = {}
-    for _, row in df3.iterrows():
-        for word in row['doc']:
-            if word in tf:
-                tf[word] += 1
-            else:
-                tf[word] = 0
-    N = len(df3)
-    return {word: math.log2((N-n+0.5)/(n+0.5)+1) for word, n in tf.items()}
-
-
 def get_unique_documents(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df[['product_uid', col]].groupby('product_uid').agg(doc=(col, 'first'))
 
@@ -146,12 +135,29 @@ def get_df_scores(df: pd.DataFrame) -> dict[str, int]:
     return DFs
 
 
-def get_idf_scores(df: pd.DataFrame, col: str) -> dict[str, int]:
+def get_idf_scores(df: pd.DataFrame, col: str) -> dict[str, float]:
     df = df.copy()
     df = get_unique_documents(df, col)
     DFs = get_df_scores(df)
     N = len(df)
     return {word: math.log2(N / DF) for word, DF in DFs.items()}
+
+
+def add_tf_idf(df: pd.DataFrame, col: str, IDFs: dict[str, float]) -> pd.DataFrame:
+    def get_tf_idf_score(query: list[str], document: list[str], IDFs: dict[str, float]) -> float:
+        in_common = words_in_common(query, document)
+
+        tf_idf = 0
+
+        for word in in_common:
+            tf = document.count(word)
+            idf = IDFs[word]
+            tf_idf += tf * idf
+
+        return tf_idf
+
+    df[f'tf_idf_query_{col}'] = df.apply(lambda r: get_tf_idf_score(r['query'], r[col], IDFs), axis=1)
+    return df
 
 
 def okapiBM25(d: list[str],q: list[str], idf:dict[str, int], avg_dl: float):
@@ -225,7 +231,8 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # TF IDF scores
     print('TF IDF scores')
-    IDFs = get_idf_scores(df, 'description')
+    IDFs_description = get_idf_scores(df, 'description')
+    df = add_tf_idf(df, 'description', IDFs_description)
 
     # Eventual features
     df = df[[
@@ -235,6 +242,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
         'ratio_words_in_common_query_description',
         'numbers_in_common_query_title',
         'glove_cos_sim',
+        'tf_idf_query_description'
     ]]
     return df
 

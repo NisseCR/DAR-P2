@@ -93,5 +93,5 @@ def preprocess(top: int = None):
 
 
 if __name__ == '__main__':
-    preprocess(top=1000)
+    preprocess(top=None)
 
