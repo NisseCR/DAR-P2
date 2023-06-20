@@ -1,6 +1,7 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
-from models.features import add_features
+from models.features import add_features, classify_target
 from models.tokenizer import tokenize
 
 # <editor-fold desc="Setup">
@@ -22,46 +23,75 @@ def read_data(top: int = None) -> pd.DataFrame:
     return df
 
 
-def calculate_idf(df: pd.DataFrame):
-    idf = {}
-    pd.unique(df['product_id'])
-    return idf
+def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
+    return df.rename(columns={'product_title': 'title', 'product_description': 'description', 'search_term': 'query'})
 
 
-# <editor-fold desc="Truncate data">
-def truncate_unusable_data(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.dropna(subset=['ratio_in_common'])
+def add_backup(df: pd.DataFrame) -> pd.DataFrame:
+    # Save original data
+    df['query_org'] = df['query']
+    df['title_org'] = df['title']
+    df['description_org'] = df['description']
     return df
 
 
-def export(df: pd.DataFrame):
-    df.to_csv('./data/data.csv')
-
-
-def preprocess(doc_name: str):
-    # Read from csv
-    df = read_data()
-
-    # Rename document column
-    df = df.rename(columns={doc_name: 'doc', 'search_term': 'query'})
-    df = df[['id', 'product_uid', 'query', 'doc', 'relevance']]
-
-    # NPL preprocessing pipeline
-    df = tokenize(df, 'doc')
+def tokenize_data(df: pd.DataFrame) -> pd.DataFrame:
     df = tokenize(df, 'query')
+    df = tokenize(df, 'title')
+    df = tokenize(df, 'description')
+    return df
 
-    # Feature extraction
+
+def preprocessing_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+    print('Rename columns')
+    df = rename_columns(df)
+
+    print('Add backup')
+    df = add_backup(df)
+
+    print('Tokenize data')
+    df = tokenize_data(df)
+
+    print('Add features')
+    df = classify_target(df)
     df = add_features(df)
+    return df
 
-    # Truncate data
-    df = truncate_unusable_data(df)
+
+def export(df: pd.DataFrame, set_type: str):
+    df.to_csv(f'./data/{set_type}.csv')
+
+
+def preprocess_set(df: pd.DataFrame, set_type: str):
+    print(f'\n>> Preprocess {set_type}')
+    # Preprocess
+    df = preprocessing_pipeline(df)
 
     # Exporting
-    export(df)
+    export(df, set_type)
+
+    # Debug
     print(df.columns)
     print(df.head(10))
 
 
+def preprocess(top: int = None):
+    # Read
+    df = read_data(top)
+
+    # Create train and test sets
+    if top is None:
+        training_size = 50000
+    else:
+        training_size = round(top * (3 / 4))
+
+    train_df, test_df = train_test_split(df, test_size=(len(df) - training_size), random_state=42)
+
+    # Preprocess
+    preprocess_set(train_df, 'train')
+    preprocess_set(test_df, 'test')
+
+
 if __name__ == '__main__':
-    preprocess('product_title')
+    preprocess(top=None)
 
