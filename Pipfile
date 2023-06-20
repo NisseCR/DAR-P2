@@ -11,6 +11,8 @@ scipy = "*"
 scikit-learn = "*"
 gensim = "*"
 pyparsing = "*"
+seaborn = "*"
+matplotlib-venn = "*"
 
 [dev-packages]
 

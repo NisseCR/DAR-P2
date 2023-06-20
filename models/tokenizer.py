@@ -51,13 +51,13 @@ def stem_tokens(tokens: list[str]) -> list[str]:
 
 
 def tokenize(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    print('Isolate numbers')
+    print(f'{col}: Isolate numbers')
     df[f'{col}_numbers'] = df[col].apply(isolate_numbers)
 
-    print('Tokenize sentences')
+    print(f'{col}: Tokenize sentences')
     df[f'{col}_std'] = df[col].apply(tokenize_sentence)
 
-    print('Apply stemming')
+    print(f'{col}: Apply stemming')
     df[f'{col}'] = df[f'{col}_std'].apply(stem_tokens)
     return df
 
