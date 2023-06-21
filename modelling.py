@@ -41,7 +41,7 @@ def train_multinomial(df: pd.DataFrame):
         print(f"class: {clas}")
         print(f"intercept: {intercept}")
         for feature, coefficient in zip(regression_features, coefficients):
-            print(f"\t{feature} has intercept:{intercept}")
+            print(f"\t{feature} has coefficient:{coefficient}")
     return multinomial_model
 
 
@@ -134,9 +134,17 @@ def model():
     df_train = df_train[(df_train['relevance'] == 1) | (df_train['relevance'] == 2) | (df_train['relevance'] == 3)]
     mul_model = train_multinomial(df_train)
     ord_model = train_ordinal(df_train)
-    df_test = read_data('test.csv')
-    df_test['mul_results'] = df_test.apply(lambda r: mul_model.predict(r[regression_features]), axis=1)
-    df_test['ord_results'] = df_test.apply(lambda r: ord_model.predict(r[regression_features]), axis=1)
+    df_test = read_data('train.csv')
+    df_test = df_test[(df_test['relevance'] == 1) | (df_test['relevance'] == 2) | (df_test['relevance'] == 3)]
+    df_test['mul_results'] = df_test.apply(lambda r: mul_model.predict(r[regression_features].to_numpy().reshape(1, -1))[0], axis=1)
+    df_test['ord_results'] = df_test.apply(lambda r: ord_model.predict(r[regression_features].to_numpy().reshape(1, -1))[0], axis=1)
+    res = df_test[['relevance', 'mul_results', 'ord_results']]
+    res['correct_mul'] = res.apply(lambda r: r['relevance'] == r['mul_results'], axis=1)
+    res['correct_ord'] = res.apply(lambda r: r['relevance'] == r['ord_results'], axis=1)
+    correct_ratio_mul = len(res[res['correct_mul']])/len(res)
+    correct_ratio_ord = len(res[res['correct_ord']]) / len(res)
+    print(f"ratio mul {correct_ratio_mul*100:.2f}%")
+    print(f"ratio ord {correct_ratio_ord*100:.2f}%")
     print("")
 
 
