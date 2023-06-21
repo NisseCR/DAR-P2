@@ -24,10 +24,10 @@ def train_multinomial(df: pd.DataFrame):
     df = df[(df['relevance'] == 1) | (df['relevance'] == 2)|(df['relevance'] == 3)] #yes this is very clean code dont ask
     X = df[regression_features].to_numpy()
     y = df['relevance2'].to_numpy().reshape(-1)
-    model = LogisticRegression(multi_class='multinomial')
-    model.max_iter = 1000
-    model.fit(X, y)
-    for clas, coefficients, intercept in zip(model.classes_, model.coef_, model.intercept_):
+    multinomial_model = LogisticRegression(multi_class='multinomial')
+    multinomial_model.max_iter = 1000
+    multinomial_model.fit(X, y)
+    for clas, coefficients, intercept in zip(multinomial_model.classes_, multinomial_model.coef_, multinomial_model.intercept_):
         print(f"class: {clas}")
         print(f"intercept: {intercept}")
         for feature, coefficient in zip(regression_features, coefficients):
