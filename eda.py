@@ -135,9 +135,6 @@ def explore_raw(query_df: pd.DataFrame, product_df: pd.DataFrame):
     print('total', ws['count'].sum())
     print('total', ws['count'].head(4).sum())
 
-
-
-
 def explore_train(df: pd.DataFrame):
     # Plot
     # Hists
