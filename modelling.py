@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import r2_score
 from scipy import stats
+import mord
+
 
 
 # Pandas settings
@@ -16,7 +18,20 @@ def read_data() -> pd.DataFrame:
     return pd.read_csv('./data/data.csv', encoding='latin1')
 
 
-def train(df: pd.DataFrame):
+def train_ordinal(df: pd.DataFrame):
+    df['relevance2'] = df.apply(lambda r: int(r['relevance']), axis=1)
+    df = df[(df['relevance'] == 1) | (df['relevance'] == 2)|(df['relevance'] == 3)] #yes this is very clean code dont ask
+    X = df[regression_features].to_numpy()
+    y = df['relevance2'].to_numpy().reshape(-1)
+    ord_reg = mord.LogisticIT()
+    model = ord_reg.fit(X, y)
+    for feature, coefficient in zip(regression_features, model.coef_):
+        print(f"{feature} has coefficient: {coefficient}")
+    for num, boundary in zip(range(1,len(model.theta_)+1), model.theta_):
+        print(f"{num} has boundary: {boundary}")
+    print("")
+
+def train_multilinear(df: pd.DataFrame):
     X = df[regression_features].to_numpy()
     y = df['relevance'].to_numpy().reshape(-1)
 
@@ -62,7 +77,7 @@ def train(df: pd.DataFrame):
     print(f"Explained Variation (R-squared): {explained_variation:.4f}")
 
 
-def _train(df: pd.DataFrame):
+def train_single_linear(df: pd.DataFrame):
     X = df['ratio_in_common'].to_numpy()
     y = df['relevance'].to_numpy()
 
@@ -88,7 +103,7 @@ def _train(df: pd.DataFrame):
 
 def model():
     df = read_data()
-    train(df)
+    train_ordinal(df)
 
 
 if __name__ == '__main__':
