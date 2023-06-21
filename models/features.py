@@ -38,6 +38,15 @@ WORD_VECTORS = KeyedVectors.load_word2vec_format(W2V_FILE, binary=False)
 # [ ] (sum, min, max) of (tf, idf, tf-idf) for the search query in each of the text field (zie site)
 
 
+def words_in_common(query: list[str], document: list[str]) -> set[str]:
+    return set(query).intersection(document)
+
+
+def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(r['query'], r[col]), axis=1)
+    return df
+
+
 def add_word_count(df: pd.DataFrame, col: str) -> pd.DataFrame:
     df[f'word_count_{col}'] = df[col].apply(len)
     return df
@@ -56,17 +65,20 @@ def add_avg_char_count(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df
 
 
-def words_in_common(query: list[str], document: list[str]) -> set[str]:
-    return set(query).intersection(document)
-
-
-def add_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'words_in_common_query_{col}'] = df.apply(lambda r: words_in_common(r['query'], r[col]), axis=1)
+def add_count_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'count_in_common_query_{col}'] = df[f'words_in_common_query_{col}'].apply(len)
     return df
 
 
-def add_count_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'count_in_common_query_{col}'] = df[f'words_in_common_query_{col}'].apply(len)
+def add_count_not_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    df[f'count_not_in_common_query_{col}'] = df['word_count_query'] - df[f'count_in_common_query_{col}']
+    return df
+
+
+def add_all_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    new_col = f'all_words_in_common_query_{col}'
+    df[new_col] = df[f'count_in_common_query_{col}'] == df[f'word_count_query']
+    df[new_col] = df[new_col].replace({True: 1, False: 0})
     return df
 
 
@@ -222,8 +234,12 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     print('Word comparison')
     df = add_count_in_common(df, 'title')
     df = add_count_in_common(df, 'description')
+    df = add_count_not_in_common(df, 'title')
+    df = add_count_not_in_common(df, 'description')
     df = add_ratio_words_in_common(df, 'title')
     df = add_ratio_words_in_common(df, 'description')
+    df = add_all_words_in_common(df, 'title')
+    df = add_all_words_in_common(df, 'description')
 
     # Number / unit comparison
     print('Number comparison')

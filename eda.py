@@ -136,8 +136,11 @@ def explore_raw(query_df: pd.DataFrame, product_df: pd.DataFrame):
     print('total', ws['count'].head(4).sum())
 
 
+
 def explore_train(df: pd.DataFrame):
     print(df.info())
+
+    print(df[df['id'] == 272]['numbers_in_common_query_title'])
 
     mask = df.columns.tolist()[19:]
     # mask = ['count_in_common_query_title', 'max_match_query_title', 'min_match_query_title']
