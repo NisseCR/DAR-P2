@@ -9,7 +9,7 @@ import pandas as pd
 
 # Pandas settings
 pd.options.display.max_columns = 10
-pd.options.display.max_colwidth = 30
+pd.options.display.max_colwidth = 50
 
 
 def read_data():
@@ -134,42 +134,29 @@ def explore_raw(query_df: pd.DataFrame, product_df: pd.DataFrame):
     plt.show()
     print('total', ws['count'].sum())
     print('total', ws['count'].head(4).sum())
-
 def explore_train(df: pd.DataFrame):
-    # Plot
-    # Hists
-    # hist(train_df, 'word_count_title', discrete=True)
-    # hist(train_df, 'word_count_description', discrete=True)
+    print(df.info())
 
-    # hist(train_df, 'word_count_title', discrete=True)
-    # hist(train_df, 'word_count_description', discrete=True)
+    print(df[df['id'] == 272]['numbers_in_common_query_title'])
 
-    # hist(train_df, 'words_in_common_query_title', discrete=True)
-    # hist(train_df, 'words_in_common_query_description', discrete=True)
+    mask = df.columns.tolist()[19:]
+    # mask = ['count_in_common_query_title', 'max_match_query_title', 'min_match_query_title']
+    df = df[mask + ['relevance']]
+    c = df.corr()['relevance'][:].reset_index().sort_values(by='relevance', ascending=False)
+    print(c)
 
-    # hist(train_df, 'ratio_words_in_common_query_title', discrete=False)
-    # hist(train_df, 'ratio_words_in_common_query_description', discrete=False)
-    #
-    # hist(train_df, 'numbers_in_common_query_title', discrete=True)
-    # hist(train_df, 'numbers_in_common_query_description', discrete=True)
-
-    hist(df, 'glove_cos_sim', discrete=False)
-
-    # Heatmap
-    feature_heatmap(df, 'ratio_words_in_common_query_title', 'relevance', bin_size=10)
-    feature_heatmap(df, 'ratio_words_in_common_query_description', 'relevance', bin_size=10)
-    feature_heatmap(df, 'glove_cos_sim', 'relevance', bin_size=5)
-
-    # Box
-    # box_plot(train_df, 'numbers_in_common_query_title')
-
-    # Scatter
-    # scatter(train_df, 'glove_cos_sim')
+    cormat = df.corr()
+    sn.heatmap(cormat, annot=True, annot_kws={"size": 4})
+    plt.xticks(fontsize=6)
+    plt.yticks(fontsize=6)
+    plt.tight_layout()
+    plt.show()
 
 
 def explore():
     query_df, product_df, train_df = read_data()
-    explore_raw(query_df, product_df)
+    # explore_raw(query_df, product_df)
+    explore_train(train_df)
 
 
 if __name__ == '__main__':
