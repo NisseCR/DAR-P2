@@ -15,13 +15,12 @@ pd.options.display.max_colwidth = 30
 
 regression_features = ['len_of_query', 'len_of_doc', 'ratio_in_common', 'okapiBM25', 'embedding_cos_sim']
 
-def read_data() -> pd.DataFrame:
-    return pd.read_csv('./data/data.csv', encoding='latin1')
+
+def read_data(file_name: str) -> pd.DataFrame:
+    return pd.read_csv(f"./data/{file_name}", encoding='latin1')
 
 
 def train_multinomial(df: pd.DataFrame):
-    df['relevance2'] = df.apply(lambda r: int(r['relevance']), axis=1)
-    df = df[(df['relevance'] == 1) | (df['relevance'] == 2)|(df['relevance'] == 3)] #yes this is very clean code dont ask
     X = df[regression_features].to_numpy()
     y = df['relevance2'].to_numpy().reshape(-1)
     multinomial_model = LogisticRegression(multi_class='multinomial')
@@ -32,13 +31,10 @@ def train_multinomial(df: pd.DataFrame):
         print(f"intercept: {intercept}")
         for feature, coefficient in zip(regression_features, coefficients):
             print(f"\t{feature} has intercept:{intercept}")
-
-    print("")
+    return multinomial_model
 
 
 def train_ordinal(df: pd.DataFrame):
-    df['relevance2'] = df.apply(lambda r: int(r['relevance']), axis=1)
-    df = df[(df['relevance'] == 1) | (df['relevance'] == 2)|(df['relevance'] == 3)] #yes this is very clean code dont ask
     X = df[regression_features].to_numpy()
     y = df['relevance2'].to_numpy().reshape(-1)
     ord_reg = mord.LogisticIT()
@@ -47,7 +43,8 @@ def train_ordinal(df: pd.DataFrame):
         print(f"{feature} has coefficient: {coefficient}")
     for num, boundary in zip(range(1,len(model.theta_)+1), model.theta_):
         print(f"{num} has boundary: {boundary}")
-    print("")
+    return model
+
 
 def train_multilinear(df: pd.DataFrame):
     X = df[regression_features].to_numpy()
@@ -120,8 +117,16 @@ def train_single_linear(df: pd.DataFrame):
 
 
 def model():
-    df = read_data()
-    train_multinomial(df)
+    df_train = read_data('train.csv')
+    df_train['relevance2'] = df_train.apply(lambda r: int(r['relevance']), axis=1)
+    # yes this is very clean code dont ask
+    df_train = df_train[(df_train['relevance'] == 1) | (df_train['relevance'] == 2) | (df_train['relevance'] == 3)]
+    mul_model = train_multinomial(df_train)
+    ord_model = train_ordinal(df_train)
+    df_test = read_data('test.csv')
+    df_test['mul_results'] = df_test.apply(lambda r: mul_model.predict(r[regression_features]), axis=1)
+    df_test['ord_results'] = df_test.apply(lambda r: ord_model.predict(r[regression_features]), axis=1)
+    print("")
 
 
 if __name__ == '__main__':
