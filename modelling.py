@@ -13,7 +13,18 @@ import mord
 pd.options.display.max_columns = 10
 pd.options.display.max_colwidth = 30
 
-regression_features = ['len_of_query', 'len_of_doc', 'ratio_in_common', 'okapiBM25', 'embedding_cos_sim']
+regression_features = [
+    'all_words_in_common_query_title',
+    'all_words_in_common_query_description',
+    'count_in_common_query_title',
+    'count_in_common_query_description',
+    'numbers_in_common_query_title',
+    'tf_idf_query_description',
+    'glove_cos_sim',
+    'count_not_in_common_query_title',
+    'count_not_in_common_query_description',
+
+]
 
 
 def read_data(file_name: str) -> pd.DataFrame:
