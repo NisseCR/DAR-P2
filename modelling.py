@@ -17,6 +17,7 @@ pd.options.display.max_colwidth = 30
 
 regression_features = [
         'all_words_in_common_query_title',
+        'all_words_in_common_query_description',
         'count_in_common_query_title',
         'count_in_common_query_description',
         'count_not_in_common_query_title',

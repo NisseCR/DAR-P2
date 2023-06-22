@@ -141,6 +141,7 @@ def explore_train(df: pd.DataFrame):
 
     mask = [
         'all_words_in_common_query_title',
+        'all_words_in_common_query_description',
         'count_in_common_query_title',
         'count_in_common_query_description',
         'count_not_in_common_query_title',

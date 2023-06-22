@@ -83,8 +83,7 @@ def add_all_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
 
 def add_ratio_words_in_common(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    df[f'ratio_words_in_common_query_{col}'] = df[f'count_in_common_query_{col}'] / df[f'word_count_query']
-    df[f'ratio_words_in_common_query_{col}'] = df[f'ratio_words_in_common_query_{col}'].fillna(0)
+    df[f'ratio_in_common_query_{col}'] = (df[f'count_in_common_query_{col}'] + 1) / (df[f'count_not_in_common_query_{col}'] + 1)
     return df
 
 
