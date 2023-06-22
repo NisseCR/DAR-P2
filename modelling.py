@@ -7,8 +7,8 @@ from sklearn.metrics import r2_score
 from scipy import stats
 import mord
 import math
-
 import statsmodels.api as sm
+import statsmodels
 
 
 # Pandas settings
@@ -80,7 +80,7 @@ def train_multilinear(df: pd.DataFrame):
 
     # wizard shit om p te berekenen, gekopieerd van stack overflow------
     # werkt nog niet met p waarde?
-    """
+    #"""
     params = np.append(regressor.intercept_, regressor.coef_)
     # newX = pd.DataFrame({"Constant":np.ones(len(X))}).join(pd.DataFrame(X.reset_index(drop=True)))
     # newX = pd.DataFrame({"Constant": np.ones(len(X))}).join(pd.DataFrame(X))
@@ -107,7 +107,7 @@ def train_multilinear(df: pd.DataFrame):
                                                                                                   p_values]
     print(myDF3)
     # ------------------------------------------------------------------
-    """
+    #"""
 
     explained_variation = r2_score(y, predictions)
 
@@ -192,20 +192,27 @@ def model2():
     df_train = read_data('train.csv')
     model = train_multilinear(df_train)
 
+    """
     df_test = read_data('test.csv')
     X = df_test[regression_features].to_numpy()
     y = df_test['relevance'].to_numpy()
     predictions = model.predict(X)
 
     explained_variation = r2_score(y, predictions)
-
-    print(f"Explained Variation (R-squared): {explained_variation:.4f}")
+    print(f"Explained Variation (R-squared): {explained_variation:.4f}")"""
 
 
 def model3():
     df_train = read_data('train.csv')
     model = train_multilinear2(df_train)
-    print(model.summary())
+    print(model.summary2())
+    df_test = read_data('test.csv')
+    X = df_test[regression_features].to_numpy()
+    X = np.flip(X)
+    y = df_test['relevance'].to_numpy()
+    print("")
+    predictions = model.predict(X)
+
     print("")
 
 
