@@ -146,7 +146,7 @@ def add_cos_sim(df: pd.DataFrame, col: str) -> pd.DataFrame:
         document_v = np.mean(document_vs, axis=0)
         return get_vector_similarity(query_v, document_v)
 
-    df['glove_cos_sim'] = df.apply(lambda r: cos_sim(r['query_vs'], r[f'{col}_vs']), axis=1)
+    df[f'glove_cos_sim_query_{col}'] = df.apply(lambda r: cos_sim(r['query_vs'], r[f'{col}_vs']), axis=1)
     return df
 
 
@@ -262,11 +262,14 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
     print('Word vectors')
     df = add_document_vectors(df, 'query')
     df = add_document_vectors(df, 'title')
+    df = add_document_vectors(df, 'description')
     df = add_cos_sim(df, 'title')
-    df = add_min_cos_sims(df, 'title')
+    df = add_cos_sim(df, 'description')
 
     # TF IDF scores
     print('TF IDF scores')
+    IDFs_title = get_idf_scores(df, 'title')
+    df = add_tf_idf(df, 'title', IDFs_title)
     IDFs_description = get_idf_scores(df, 'description')
     df = add_tf_idf(df, 'description', IDFs_description)
 
