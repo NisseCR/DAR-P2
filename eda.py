@@ -139,16 +139,25 @@ def explore_raw(query_df: pd.DataFrame, product_df: pd.DataFrame):
 def explore_train(df: pd.DataFrame):
     print(df.info())
 
-    print(df[df['id'] == 272]['numbers_in_common_query_title'])
-
-    mask = df.columns.tolist()[19:]
+    mask = [
+        'all_words_in_common_query_title',
+        'all_words_in_common_query_description',
+        'count_in_common_query_title',
+        'count_in_common_query_description',
+        'count_not_in_common_query_title',
+        'count_not_in_common_query_description',
+        'numbers_in_common_query_title',
+        'tf_idf_query_description',
+        'glove_cos_sim_query_title',
+        'glove_cos_sim_query_description'
+    ]
     # mask = ['count_in_common_query_title', 'max_match_query_title', 'min_match_query_title']
     df = df[mask + ['relevance']]
     c = df.corr()['relevance'][:].reset_index().sort_values(by='relevance', ascending=False)
     print(c)
 
     cormat = df.corr()
-    sn.heatmap(cormat, annot=True, annot_kws={"size": 4})
+    sn.heatmap(cormat, annot=True, annot_kws={"size": 7})
     plt.xticks(fontsize=6)
     plt.yticks(fontsize=6)
     plt.tight_layout()
