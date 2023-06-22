@@ -65,7 +65,7 @@ def train_multilinear2(df: pd.DataFrame):
     X2 = sm.add_constant(X)
     est = sm.OLS(y, X2)
     est2 = est.fit()
-    print(est2.summary())
+    return est2
 
 
 
@@ -202,5 +202,12 @@ def model2():
     print(f"Explained Variation (R-squared): {explained_variation:.4f}")
 
 
+def model3():
+    df_train = read_data('train.csv')
+    model = train_multilinear2(df_train)
+    print(model.summary())
+    print("")
+
+
 if __name__ == '__main__':
-    model()
+    model3()
