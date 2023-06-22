@@ -60,8 +60,8 @@ def train_ordinal(df: pd.DataFrame):
 
 
 def train_multilinear2(df: pd.DataFrame):
-    X = df[regression_features].to_numpy()
-    y = df['relevance'].to_numpy().reshape(-1)
+    X = df[regression_features]
+    y = df['relevance']
     X2 = sm.add_constant(X)
     est = sm.OLS(y, X2)
     est2 = est.fit()
@@ -207,12 +207,12 @@ def model3():
     model = train_multilinear2(df_train)
     print(model.summary2())
     df_test = read_data('test.csv')
-    X = df_test[regression_features].to_numpy()
-    X = np.flip(X)
-    y = df_test['relevance'].to_numpy()
+    X = df_test[regression_features]
+    X.insert(0, 'const', 1)  # statsmodels is weird, const is treated as a feature
+    y = df_test['relevance']
     print("")
     predictions = model.predict(X)
-
+    print(f"root mean sqaure error: {statsmodels.tools.eval_measures.rmse(y, predictions)}")
     print("")
 
 
