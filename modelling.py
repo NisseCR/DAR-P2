@@ -8,6 +8,7 @@ from scipy import stats
 import mord
 import math
 
+import statsmodels.api as sm
 
 
 # Pandas settings
@@ -58,11 +59,19 @@ def train_ordinal(df: pd.DataFrame):
     return model
 
 
+def train_multilinear2(df: pd.DataFrame):
+    X = df[regression_features].to_numpy()
+    y = df['relevance'].to_numpy().reshape(-1)
+    X2 = sm.add_constant(X)
+    est = sm.OLS(y, X2)
+    est2 = est.fit()
+    print(est2.summary())
+
+
+
 def train_multilinear(df: pd.DataFrame):
     X = df[regression_features].to_numpy()
     y = df['relevance'].to_numpy().reshape(-1)
-
-
 
     regressor = LinearRegression()
     regressor.fit(X, y)
