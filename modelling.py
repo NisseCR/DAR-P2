@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.metrics import r2_score
 from scipy import stats
 import mord
+import math
 
 
 
@@ -132,7 +133,7 @@ def train_single_linear(df: pd.DataFrame):
 def model():
     df_train = read_data('train.csv')
     df_train['relevance2'] = df_train.apply(lambda r: int(r['relevance']), axis=1)
-    # yes this is very clean code dont ask
+    # yes this is very clean code don't ask
     df_train = df_train[(df_train['relevance'] == 1) | (df_train['relevance'] == 2) | (df_train['relevance'] == 3)]
     mul_model = train_multinomial(df_train)
     ord_model = train_ordinal(df_train)
@@ -147,7 +148,35 @@ def model():
     correct_ratio_ord = len(res[res['correct_ord']]) / len(res)
     print(f"ratio mul {correct_ratio_mul*100:.2f}%")
     print(f"ratio ord {correct_ratio_ord*100:.2f}%")
+    confusion_matrix_mul = create_confusion_matrix(res, 'relevance', 'mul_results')
+    confusion_matrix_ord = create_confusion_matrix(res, 'relevance', 'ord_results')
+    print_confusion_matrix(confusion_matrix_mul, "multinomial")
+    print_confusion_matrix(confusion_matrix_ord, "ordinal")
     print("")
+
+
+def create_confusion_matrix(df: pd.DataFrame, category_actual: str, category_predicted: str):
+    #this function assumes values of 1,2 or 3
+    matrix = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    for _,r in df.iterrows():
+        actual = int(r[category_actual])
+        predicted = int(r[category_predicted])
+        matrix[actual-1][predicted-1] += 1
+    return matrix
+
+
+def print_confusion_matrix(matrix: [[int]], name: str):
+    # function assumes values of 1, 2 or 3
+    print(f"confusion matrix of {name}")
+    print("\tpredicted values")
+    print("\t1\t\t2\t3")
+    for (index, row) in zip(range(1, 4), matrix):
+        result = f"{index}"
+        for val in row:
+            amount_of_chars = 1 if val == 0 else round(math.log(val, 10))
+            result += f"\t{val}"+" "*(4 - amount_of_chars)
+        print(result)
+
 
 
 def model2():
@@ -164,6 +193,5 @@ def model2():
     print(f"Explained Variation (R-squared): {explained_variation:.4f}")
 
 
-
 if __name__ == '__main__':
-    model2()
+    model()
