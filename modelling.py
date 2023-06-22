@@ -25,7 +25,6 @@ regression_features = [
     'glove_cos_sim',
     'count_not_in_common_query_title',
     'count_not_in_common_query_description',
-
 ]
 
 
