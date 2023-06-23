@@ -9,6 +9,7 @@ import mord
 import math
 import statsmodels.api as sm
 import statsmodels
+from matplotlib_venn import venn3, venn2_circles
 
 
 # Pandas settings
@@ -161,7 +162,27 @@ def model():
     confusion_matrix_ord = create_confusion_matrix(res, 'relevance', 'ord_results')
     print_confusion_matrix(confusion_matrix_mul, "multinomial")
     print_confusion_matrix(confusion_matrix_ord, "ordinal")
+    plt.title("Correctness venn diagram all classes")
+    correct_set = set(df_test['id'])
+    correct_mul_set = set(df_test[df_test['relevance'] == df_test['mul_results']]['id'])
+    correct_ord_set = set(df_test[df_test['relevance'] == df_test['ord_results']]['id'])
+    venn3([correct_set, correct_mul_set, correct_ord_set], ("Total", "Correct predictions mul", "Correct predictions ord"), alpha=0.7)
+    plt.show()
+    plot_venn_diagram_class(1, df_test)
+    plot_venn_diagram_class(2, df_test)
+    plot_venn_diagram_class(3, df_test)
     print("")
+
+
+def plot_venn_diagram_class(clas, df : pd.DataFrame):
+    plt.title(f"Correctness venn diagram Class {clas}")
+    df = df[df['relevance']==clas]
+    correct_set = set(df['id'])
+    correct_mul_set = set(df[df['relevance'] == df['mul_results']]['id'])
+    correct_ord_set = set(df[df['relevance'] == df['ord_results']]['id'])
+    venn3([correct_set, correct_mul_set, correct_ord_set],
+          ("Total", "Correct predictions mul", "Correct predictions ord"), alpha=0.7)
+    plt.show()
 
 
 def create_confusion_matrix(df: pd.DataFrame, category_actual: str, category_predicted: str):
@@ -213,6 +234,14 @@ def model3():
     print("")
     predictions = model.predict(X)
     print(f"root mean sqaure error: {statsmodels.tools.eval_measures.rmse(y, predictions)}")
+    df_all = pd.concat([df_train,df_test])
+    for feature, coef in zip(regression_features, model.params[1:]):
+        vals = df_all[feature].to_numpy()
+        stdev = vals.std()
+        av = vals.mean()
+        importance = np.abs(coef*stdev)
+        print(f"P{feature}  -> stdev:{stdev:.4f}  av:{av:.4f}   importance:{importance:.4f}")
+
     print("")
 
 
