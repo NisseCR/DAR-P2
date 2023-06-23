@@ -239,9 +239,10 @@ def model3():
         vals = df_all[feature].to_numpy()
         stdev = vals.std()
         av = vals.mean()
-        importance = np.abs(coef*stdev)
-        print(f"P{feature}  -> stdev:{stdev:.4f}  av:{av:.4f}   importance:{importance:.4f}")
-
+        importance = np.abs(coef*av)
+        print(f"P{feature}{' '*(40-len(feature))}  -> stdev:{stdev:.4f}  coef:{coef:.4f}   importance:{importance:.4f}")
+    plt.hist(predictions, bins=30)
+    plt.show()
     print("")
 
 
